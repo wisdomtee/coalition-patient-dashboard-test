@@ -1,6 +1,4 @@
-// ==========================================
 // COALITION TECHNOLOGIES PATIENT DASHBOARD
-// ==========================================
 
 // API
 const API_URL =
@@ -14,17 +12,13 @@ let allPatients = [];
 let selectedPatient = null;
 
 
-// ==========================================
 // API AUTHENTICATION
-// ==========================================
 
 const authHeader =
     "Basic " + btoa(`${API_USERNAME}:${API_PASSWORD}`);
 
 
-// ==========================================
 // FETCH PATIENTS
-// ==========================================
 
 async function fetchPatients() {
 
@@ -88,10 +82,7 @@ async function fetchPatients() {
 }
 
 
-// ==========================================
 // SELECT PATIENT
-// ==========================================
-
 function selectPatient(patient) {
 
     if (!patient) {
@@ -111,9 +102,7 @@ function selectPatient(patient) {
 }
 
 
-// ==========================================
 // POPULATE PATIENT
-// ==========================================
 
 function populatePatient(patient) {
 
@@ -133,9 +122,7 @@ function populatePatient(patient) {
 }
 
 
-// ==========================================
 // PATIENT PROFILE
-// ==========================================
 
 function populatePatientProfile(patient) {
 
@@ -192,10 +179,7 @@ function populatePatientProfile(patient) {
 }
 
 
-// ==========================================
 // VITAL SIGNS
-// ==========================================
-
 function populateVitals(patient) {
 
     const history =
@@ -216,9 +200,7 @@ function populateVitals(patient) {
         getLatestDiagnosis(history);
 
 
-    // ======================================
     // BLOOD PRESSURE
-    // ======================================
 
     const systolic =
         latest.blood_pressure?.systolic?.value ??
@@ -242,9 +224,7 @@ function populateVitals(patient) {
     );
 
 
-    // ======================================
     // RESPIRATORY RATE
-    // ======================================
 
     const respiratoryRate =
         latest.respiratory_rate?.value ??
@@ -260,9 +240,7 @@ function populateVitals(patient) {
     );
 
 
-    // ======================================
     // TEMPERATURE
-    // ======================================
 
     const temperature =
         latest.temperature?.value ??
@@ -278,9 +256,7 @@ function populateVitals(patient) {
     );
 
 
-    // ======================================
     // HEART RATE
-    // ======================================
 
     const heartRate =
         latest.heart_rate?.value ??
@@ -297,9 +273,7 @@ function populateVitals(patient) {
 }
 
 
-// ==========================================
 // GET LATEST DIAGNOSIS
-// ==========================================
 
 function getLatestDiagnosis(history) {
 
@@ -325,10 +299,7 @@ function getLatestDiagnosis(history) {
 }
 
 
-// ==========================================
 // GET DIAGNOSIS DATE
-// ==========================================
-
 function getDiagnosisDate(record) {
 
     if (!record) {
@@ -350,10 +321,7 @@ function getDiagnosisDate(record) {
 }
 
 
-// ==========================================
 // MONTH NUMBER
-// ==========================================
-
 function getMonthNumber(month) {
 
     if (!month) {
@@ -384,11 +352,7 @@ function getMonthNumber(month) {
     );
 }
 
-
-// ==========================================
 // DIAGNOSIS HISTORY
-// ==========================================
-
 function populateDiagnosisHistory(patient) {
 
     const history =
@@ -405,9 +369,7 @@ function populateDiagnosisHistory(patient) {
 }
 
 
-// ==========================================
 // GET SELECTED CHART PERIOD
-// ==========================================
 
 function getSelectedPeriod() {
 
@@ -435,9 +397,7 @@ function getSelectedPeriod() {
 }
 
 
-// ==========================================
 // FILTER DIAGNOSIS HISTORY
-// ==========================================
 
 function getFilteredHistory(history) {
 
@@ -468,9 +428,7 @@ function getFilteredHistory(history) {
 }
 
 
-// ==========================================
 // DIAGNOSTIC LIST
-// ==========================================
 
 function populateDiagnosticList(patient) {
 
@@ -537,9 +495,7 @@ function populateDiagnosticList(patient) {
 }
 
 
-// ==========================================
 // LAB RESULTS
-// ==========================================
 
 function populateLabResults(patient) {
 
@@ -598,9 +554,7 @@ function populateLabResults(patient) {
 }
 
 
-// ==========================================
 // PATIENT SIDEBAR
-// ==========================================
 
 function populatePatientsSidebar(patients) {
 
@@ -676,9 +630,7 @@ function populatePatientsSidebar(patients) {
 }
 
 
-// ==========================================
 // SET ACTIVE PATIENT
-// ==========================================
 
 function setActivePatient(patient) {
 
@@ -713,10 +665,7 @@ function setActivePatient(patient) {
 }
 
 
-// ==========================================
 // BLOOD PRESSURE CHART
-// ==========================================
-
 function createBloodPressureChart(history) {
 
     const canvas =
@@ -903,10 +852,7 @@ function createBloodPressureChart(history) {
 }
 
 
-// ==========================================
 // DESTROY BLOOD PRESSURE CHART
-// ==========================================
-
 function destroyBloodPressureChart() {
 
     if (bloodPressureChart) {
@@ -918,9 +864,7 @@ function destroyBloodPressureChart() {
 }
 
 
-// ==========================================
 // PERIOD SELECTOR
-// ==========================================
 
 function setupPeriodSelector() {
 
@@ -972,9 +916,7 @@ function setupPeriodSelector() {
 }
 
 
-// ==========================================
 // SET TEXT
-// ==========================================
 
 function setText(id, value) {
 
@@ -994,9 +936,7 @@ function setText(id, value) {
 }
 
 
-// ==========================================
 // ESCAPE HTML
-// ==========================================
 
 function escapeHTML(value) {
 
@@ -1009,10 +949,7 @@ function escapeHTML(value) {
 }
 
 
-// ==========================================
 // ERROR MESSAGE
-// ==========================================
-
 function showError(message) {
 
     console.error(message);
@@ -1058,10 +995,7 @@ function showError(message) {
 }
 
 
-// ==========================================
 // START APPLICATION
-// ==========================================
-
 document.addEventListener(
     "DOMContentLoaded",
     () => {
