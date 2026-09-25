@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Tech.Care | Patient Dashboard</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <header class="top-header">
+        <div class="top-title">
+            <span class="grid-icon">▦</span>
+            <span>2026 FED API Skills Test</span>
+            <span class="separator">›</span>
+            <strong>HealthCare Dashboard</strong>
+        </div>
+
+        <div class="top-actions">
+            <span class="zoom">50%</span>
+            <span class="chevron">⌄</span>
+            <span class="help">?</span>
+            <button class="sign-in">Sign in</button>
+        </div>
+    </header>
+
+    <main class="dashboard">
+
+        <!-- APPLICATION NAVIGATION -->
+        <nav class="app-navbar">
+
+            <div class="brand">
+                <div class="brand-mark">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <strong>Tech.Care</strong>
+            </div>
+
+            <div class="nav-links">
+
+                <div class="nav-link">
+                    <span>⌂</span>
+                    Overview
+                </div>
+
+                <div class="nav-link active">
+                    <span>♧</span>
+                    Patients
+                </div>
+
+                <div class="nav-link">
+                    <span>□</span>
+                    Schedule
+                </div>
+
+                <div class="nav-link">
+                    <span>▱</span>
+                    Message
+                </div>
+
+                <div class="nav-link">
+                    <span>▭</span>
+                    Transactions
+                </div>
+
+            </div>
+
+            <div class="doctor-profile">
+                <div class="doctor-avatar"></div>
+
+                <div>
+                    <strong>Dr. Jose Simmons</strong>
+                    <small>General Practitioner</small>
+                </div>
+
+                <span class="settings">⚙</span>
+                <span class="more">⋮</span>
+            </div>
+
+        </nav>
+
+        <section class="content-grid">
+
+            <!-- PATIENTS SIDEBAR -->
+            <aside class="patients-panel">
+
+                <div class="panel-heading">
+                    <h2>Patients</h2>
+                    <span class="search-icon">⌕</span>
+                </div>
+
+                <div id="patients-list" class="patients-list">
+                    <!-- Patients populated by JavaScript -->
+                </div>
+
+            </aside>
+
+
+            <!-- CENTER CONTENT -->
+            <section class="main-content">
+
+                <!-- DIAGNOSIS HISTORY -->
+                <section class="card diagnosis-card">
+
+                    <h2>Diagnosis History</h2>
+
+                    <div class="blood-pressure-section">
+
+                        <div class="chart-area">
+
+                            <div class="chart-header">
+                                <strong>Blood Pressure</strong>
+
+                                <select id="period-select">
+                                    <option>Last 6 months</option>
+                                </select>
+                            </div>
+
+                            <canvas id="bloodPressureChart"></canvas>
+
+                        </div>
+
+                        <div class="blood-pressure-summary">
+
+                            <div class="pressure-item systolic">
+                                <div>
+                                    <span class="dot"></span>
+                                    <strong>Systolic</strong>
+                                </div>
+
+                                <strong id="systolic-value">160</strong>
+
+                                <small>▲ Higher than Average</small>
+                            </div>
+
+                            <div class="pressure-item diastolic">
+                                <div>
+                                    <span class="dot"></span>
+                                    <strong>Diastolic</strong>
+                                </div>
+
+                                <strong id="diastolic-value">78</strong>
+
+                                <small>▼ Lower than Average</small>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- VITAL SIGNS -->
+
+                    <div class="vitals-grid">
+
+                        <div class="vital-card respiratory">
+
+                            <div class="vital-icon lungs">♧</div>
+
+                            <span>Respiratory Rate</span>
+                            <strong id="respiratory-rate">20 bpm</strong>
+                            <small>Normal</small>
+
+                        </div>
+
+
+                        <div class="vital-card temperature">
+
+                            <div class="vital-icon thermometer">♨</div>
+
+                            <span>Temperature</span>
+                            <strong id="temperature">98.6°F</strong>
+                            <small>Normal</small>
+
+                        </div>
+
+
+                        <div class="vital-card heart">
+
+                            <div class="vital-icon heart-icon">♡</div>
+
+                            <span>Heart Rate</span>
+                            <strong id="heart-rate">78 bpm</strong>
+                            <small>▼ Lower than Average</small>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- DIAGNOSTIC LIST -->
+                <section class="card diagnostic-card">
+
+                    <h2>Diagnostic List</h2>
+
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Problem/Diagnosis</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="diagnostic-list">
+                                <!-- API data -->
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+
+            <!-- RIGHT PROFILE COLUMN -->
+            <aside class="right-column">
+
+                <!-- PATIENT PROFILE -->
+                <section class="card patient-profile-card">
+
+                    <div class="patient-photo" id="patient-photo">
+                        <img src="" alt="Jessica Taylor">
+                    </div>
+
+                    <h2 id="patient-name">Jessica Taylor</h2>
+
+                    <div class="patient-information">
+
+                        <div class="info-row">
+                            <span class="info-icon">▣</span>
+                            <div>
+                                <small>Date Of Birth</small>
+                                <strong id="date-of-birth">August 23, 1996</strong>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-icon">♀</span>
+                            <div>
+                                <small>Gender</small>
+                                <strong id="gender">Female</strong>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-icon">☎</span>
+                            <div>
+                                <small>Contact Info.</small>
+                                <strong id="contact-info">(415) 555-1234</strong>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-icon">☎</span>
+                            <div>
+                                <small>Emergency Contacts</small>
+                                <strong id="emergency-contact">(415) 555-5678</strong>
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-icon">♢</span>
+                            <div>
+                                <small>Insurance Provider</small>
+                                <strong id="insurance-provider">
+                                    Sunrise Health Assurance
+                                </strong>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button class="show-information">
+                        Show All Information
+                    </button>
+
+                </section>
+
+
+                <!-- LAB RESULTS -->
+                <section class="card lab-card">
+
+                    <h2>Lab Results</h2>
+
+                    <div id="lab-results" class="lab-results">
+                        <!-- API data -->
+                    </div>
+
+                </section>
+
+            </aside>
+
+        </section>
+
+    </main>
+
+    <script src="js/app.js"></script>
+
+</body>
+</html>

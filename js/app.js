@@ -1,5 +1,8 @@
-// Coalition Technologies Patient Data API
+// ==========================================
+// COALITION TECHNOLOGIES PATIENT DASHBOARD
+// ==========================================
 
+// API
 const API_URL =
     "https://fedskillstest.coalitiontechnologies.workers.dev";
 
@@ -7,6 +10,8 @@ const API_USERNAME = "coalition";
 const API_PASSWORD = "skills-test";
 
 let bloodPressureChart = null;
+let allPatients = [];
+let selectedPatient = null;
 
 
 // ==========================================
@@ -43,21 +48,31 @@ async function fetchPatients() {
 
         console.log("Patients received:", patients);
 
-        // Find Jessica Taylor
+        if (!Array.isArray(patients) || patients.length === 0) {
+            throw new Error(
+                "No patient data was returned from the API."
+            );
+        }
+
+        allPatients = patients;
+
+        populatePatientsSidebar(patients);
+
         const jessica = patients.find(
             patient =>
                 patient.name &&
                 patient.name.toLowerCase() === "jessica taylor"
         );
 
-        if (!jessica) {
-            throw new Error("Jessica Taylor was not found.");
-        }
+        const initialPatient =
+            jessica || patients[0];
 
-        console.log("Jessica Taylor:", jessica);
+        console.log(
+            "Initial patient:",
+            initialPatient
+        );
 
-        // Populate dashboard
-        populatePatient(jessica);
+        selectPatient(initialPatient);
 
     } catch (error) {
 
@@ -66,7 +81,33 @@ async function fetchPatients() {
             error
         );
 
+        showError(
+            "Unable to load patient information. Please refresh the page."
+        );
     }
+}
+
+
+// ==========================================
+// SELECT PATIENT
+// ==========================================
+
+function selectPatient(patient) {
+
+    if (!patient) {
+        return;
+    }
+
+    selectedPatient = patient;
+
+    console.log(
+        "Selected patient:",
+        patient.name
+    );
+
+    setActivePatient(patient);
+
+    populatePatient(patient);
 }
 
 
@@ -75,6 +116,10 @@ async function fetchPatients() {
 // ==========================================
 
 function populatePatient(patient) {
+
+    if (!patient) {
+        return;
+    }
 
     populatePatientProfile(patient);
 
@@ -85,8 +130,6 @@ function populatePatient(patient) {
     populateDiagnosticList(patient);
 
     populateLabResults(patient);
-
-    populatePatientsSidebar(patient);
 }
 
 
@@ -126,19 +169,25 @@ function populatePatientProfile(patient) {
         patient.insurance_type
     );
 
+    const photo =
+        document.querySelector("#patient-photo img");
 
-    // Patient photo
+    if (photo) {
 
-    const photo = document.querySelector(
-        "#patient-photo img"
-    );
+        if (patient.profile_picture) {
 
-    if (photo && patient.profile_picture) {
+            photo.src =
+                patient.profile_picture;
 
-        photo.src = patient.profile_picture;
+            photo.alt =
+                patient.name || "Patient";
 
-        photo.alt = patient.name;
+        } else {
 
+            photo.removeAttribute("src");
+
+            photo.alt = "Patient";
+        }
     }
 }
 
@@ -149,29 +198,32 @@ function populatePatientProfile(patient) {
 
 function populateVitals(patient) {
 
-    if (
-        !patient.diagnosis_history ||
-        patient.diagnosis_history.length === 0
-    ) {
+    const history =
+        patient.diagnosis_history || [];
+
+    if (history.length === 0) {
+
+        setText("systolic-value", "--");
+        setText("diastolic-value", "--");
+        setText("respiratory-rate", "--");
+        setText("temperature", "--");
+        setText("heart-rate", "--");
+
         return;
     }
 
-
-    // Latest record
-
     const latest =
-        patient.diagnosis_history[
-            patient.diagnosis_history.length - 1
-        ];
+        getLatestDiagnosis(history);
 
 
-    // Blood pressure
+    // ======================================
+    // BLOOD PRESSURE
+    // ======================================
 
     const systolic =
         latest.blood_pressure?.systolic?.value ??
         latest.blood_pressure?.systolic ??
         "--";
-
 
     const diastolic =
         latest.blood_pressure?.diastolic?.value ??
@@ -184,14 +236,15 @@ function populateVitals(patient) {
         systolic
     );
 
-
     setText(
         "diastolic-value",
         diastolic
     );
 
 
-    // Respiratory rate
+    // ======================================
+    // RESPIRATORY RATE
+    // ======================================
 
     const respiratoryRate =
         latest.respiratory_rate?.value ??
@@ -201,11 +254,15 @@ function populateVitals(patient) {
 
     setText(
         "respiratory-rate",
-        `${respiratoryRate} bpm`
+        respiratoryRate === "--"
+            ? "--"
+            : `${respiratoryRate} bpm`
     );
 
 
-    // Temperature
+    // ======================================
+    // TEMPERATURE
+    // ======================================
 
     const temperature =
         latest.temperature?.value ??
@@ -215,11 +272,15 @@ function populateVitals(patient) {
 
     setText(
         "temperature",
-        `${temperature}°F`
+        temperature === "--"
+            ? "--"
+            : `${temperature}°F`
     );
 
 
-    // Heart rate
+    // ======================================
+    // HEART RATE
+    // ======================================
 
     const heartRate =
         latest.heart_rate?.value ??
@@ -228,8 +289,98 @@ function populateVitals(patient) {
 
 
     setText(
-        "heart-rate",
-        `${heartRate} bpm`
+    "respiratory-rate",
+    respiratoryRate === "--"
+        ? "--"
+        : `${respiratoryRate} breaths/min`
+);
+}
+
+
+// ==========================================
+// GET LATEST DIAGNOSIS
+// ==========================================
+
+function getLatestDiagnosis(history) {
+
+    if (!Array.isArray(history) || history.length === 0) {
+        return {};
+    }
+
+    const sorted =
+        [...history].sort(
+            (a, b) => {
+
+                const dateA =
+                    getDiagnosisDate(a);
+
+                const dateB =
+                    getDiagnosisDate(b);
+
+                return dateA - dateB;
+            }
+        );
+
+    return sorted[sorted.length - 1] || {};
+}
+
+
+// ==========================================
+// GET DIAGNOSIS DATE
+// ==========================================
+
+function getDiagnosisDate(record) {
+
+    if (!record) {
+        return new Date(0);
+    }
+
+    const monthNumber =
+        getMonthNumber(record.month);
+
+    if (!record.year || !monthNumber) {
+        return new Date(0);
+    }
+
+    return new Date(
+        Number(record.year),
+        monthNumber - 1,
+        1
+    );
+}
+
+
+// ==========================================
+// MONTH NUMBER
+// ==========================================
+
+function getMonthNumber(month) {
+
+    if (!month) {
+        return 0;
+    }
+
+    const months = {
+
+        january: 1,
+        february: 2,
+        march: 3,
+        april: 4,
+        may: 5,
+        june: 6,
+        july: 7,
+        august: 8,
+        september: 9,
+        october: 10,
+        november: 11,
+        december: 12
+
+    };
+
+    return (
+        months[
+            String(month).toLowerCase()
+        ] || 0
     );
 }
 
@@ -240,16 +391,79 @@ function populateVitals(patient) {
 
 function populateDiagnosisHistory(patient) {
 
-    if (
-        !patient.diagnosis_history ||
-        patient.diagnosis_history.length === 0
-    ) {
+    const history =
+        patient.diagnosis_history || [];
+
+    if (history.length === 0) {
+
+        destroyBloodPressureChart();
+
         return;
     }
 
+    createBloodPressureChart(history);
+}
 
-    createBloodPressureChart(
-        patient.diagnosis_history
+
+// ==========================================
+// GET SELECTED CHART PERIOD
+// ==========================================
+
+function getSelectedPeriod() {
+
+    const select =
+        document.getElementById(
+            "period-select"
+        );
+
+    if (!select) {
+        return 6;
+    }
+
+    const value =
+        select.value.toLowerCase();
+
+    if (value.includes("12")) {
+        return 12;
+    }
+
+    if (value.includes("all")) {
+        return null;
+    }
+
+    return 6;
+}
+
+
+// ==========================================
+// FILTER DIAGNOSIS HISTORY
+// ==========================================
+
+function getFilteredHistory(history) {
+
+    if (!Array.isArray(history)) {
+        return [];
+    }
+
+    const sortedHistory =
+        [...history].sort(
+            (a, b) =>
+                getDiagnosisDate(a) -
+                getDiagnosisDate(b)
+        );
+
+    const period =
+        getSelectedPeriod();
+
+    if (period === null) {
+        return sortedHistory;
+    }
+
+    return sortedHistory.slice(
+        Math.max(
+            0,
+            sortedHistory.length - period
+        )
     );
 }
 
@@ -261,36 +475,63 @@ function populateDiagnosisHistory(patient) {
 function populateDiagnosticList(patient) {
 
     const container =
-        document.getElementById("diagnostic-list");
+        document.getElementById(
+            "diagnostic-list"
+        );
 
-
-    if (
-        !container ||
-        !patient.diagnostic_list
-    ) {
+    if (!container) {
         return;
     }
 
-
     container.innerHTML = "";
 
+    const diagnostics =
+        patient.diagnostic_list || [];
 
-    patient.diagnostic_list.forEach(
+    if (diagnostics.length === 0) {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+            <td colspan="3">
+                No diagnostic information available.
+            </td>
+        `;
+
+        container.appendChild(row);
+
+        return;
+    }
+
+    diagnostics.forEach(
         diagnostic => {
 
             const row =
                 document.createElement("tr");
 
+            const name =
+                escapeHTML(
+                    diagnostic.name || "--"
+                );
+
+            const description =
+                escapeHTML(
+                    diagnostic.description || "--"
+                );
+
+            const status =
+                escapeHTML(
+                    diagnostic.status || "--"
+                );
 
             row.innerHTML = `
-                <td>${diagnostic.name || "--"}</td>
-                <td>${diagnostic.description || "--"}</td>
-                <td>${diagnostic.status || "--"}</td>
+                <td>${name}</td>
+                <td>${description}</td>
+                <td>${status}</td>
             `;
 
-
             container.appendChild(row);
-
         }
     );
 }
@@ -303,42 +544,55 @@ function populateDiagnosticList(patient) {
 function populateLabResults(patient) {
 
     const container =
-        document.getElementById("lab-results");
+        document.getElementById(
+            "lab-results"
+        );
 
-
-    if (
-        !container ||
-        !patient.lab_results
-    ) {
+    if (!container) {
         return;
     }
 
-
     container.innerHTML = "";
 
+    const labs =
+        patient.lab_results || [];
 
-    patient.lab_results.forEach(
+    if (labs.length === 0) {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "lab-result";
+
+        item.textContent =
+            "No lab results available.";
+
+        container.appendChild(item);
+
+        return;
+    }
+
+    labs.forEach(
         lab => {
 
             const item =
                 document.createElement("div");
 
-
             item.className =
-                "lab-result-item";
-
+                "lab-result";
 
             const labName =
                 typeof lab === "string"
                     ? lab
-                    : lab.name || lab.result || "--";
+                    : lab.name ||
+                      lab.result ||
+                      "--";
 
-
-            item.textContent = labName;
-
+            item.textContent =
+                labName;
 
             container.appendChild(item);
-
         }
     );
 }
@@ -348,46 +602,114 @@ function populateLabResults(patient) {
 // PATIENT SIDEBAR
 // ==========================================
 
-function populatePatientsSidebar(patient) {
+function populatePatientsSidebar(patients) {
 
     const container =
-        document.getElementById("patients-list");
-
+        document.getElementById(
+            "patients-list"
+        );
 
     if (!container) {
+
+        console.error(
+            "Patient sidebar container #patients-list was not found."
+        );
+
         return;
     }
 
-
-    // The FED test asks us to display Jessica Taylor.
-
     container.innerHTML = "";
 
+    patients.forEach(
+        patient => {
 
-    const patientItem =
-        document.createElement("div");
+            const patientItem =
+                document.createElement("div");
+
+            patientItem.className =
+                "patient-item";
+
+            patientItem.dataset.patientName =
+                patient.name || "";
+
+            patientItem.innerHTML = `
+
+                <img
+                    src="${patient.profile_picture || ""}"
+                    alt="${escapeHTML(patient.name || "Patient")}"
+                    class="patient-avatar"
+                >
+
+                <div class="patient-details">
+
+                    <strong>
+                        ${escapeHTML(patient.name || "--")}
+                    </strong>
+
+                    <span>
+                        ${escapeHTML(patient.gender || "--")},
+                        ${patient.age ?? "--"}
+                    </span>
+
+                </div>
+
+                <div class="patient-more">
+                    ⋮
+                </div>
+
+            `;
+
+            patientItem.addEventListener(
+                "click",
+                () => {
+
+                    selectPatient(patient);
+
+                }
+            );
+
+            container.appendChild(
+                patientItem
+            );
+        }
+    );
+}
 
 
-    patientItem.className =
-        "patient-item active";
+// ==========================================
+// SET ACTIVE PATIENT
+// ==========================================
 
+function setActivePatient(patient) {
 
-    patientItem.innerHTML = `
-        <img
-            src="${patient.profile_picture || ""}"
-            alt="${patient.name}"
-        >
+    const items =
+        document.querySelectorAll(
+            ".patient-item"
+        );
 
-        <div class="patient-item-info">
-            <strong>${patient.name}</strong>
-            <span>
-                ${patient.gender || ""}, ${patient.age || ""}
-            </span>
-        </div>
-    `;
+    items.forEach(
+        item => {
 
+            item.classList.remove(
+                "active"
+            );
 
-    container.appendChild(patientItem);
+            const itemName =
+                item.dataset.patientName;
+
+            if (
+                itemName &&
+                patient.name &&
+                itemName.toLowerCase() ===
+                    patient.name.toLowerCase()
+            ) {
+
+                item.classList.add(
+                    "active"
+                );
+            }
+        }
+    );
 }
 
 
@@ -402,7 +724,6 @@ function createBloodPressureChart(history) {
             "bloodPressureChart"
         );
 
-
     if (!canvas) {
 
         console.error(
@@ -411,7 +732,6 @@ function createBloodPressureChart(history) {
 
         return;
     }
-
 
     if (!window.Chart) {
 
@@ -423,46 +743,58 @@ function createBloodPressureChart(history) {
     }
 
 
+    // Get history according to selected period
+    const filteredHistory =
+        getFilteredHistory(history);
+
+
+    // Chart labels
     const labels =
-        history.map(
+        filteredHistory.map(
             record =>
-                `${record.month} ${record.year}`
+                `${record.month || "--"} ${record.year || ""}`
         );
 
 
+    // Systolic values
     const systolicData =
-        history.map(
-            record =>
-                record.blood_pressure
-                    ?.systolic
-                    ?.value ??
-                record.blood_pressure
-                    ?.systolic ??
-                null
+        filteredHistory.map(
+            record => {
+
+                const value =
+                    record.blood_pressure?.systolic?.value ??
+                    record.blood_pressure?.systolic;
+
+                return value !== undefined &&
+                       value !== null
+                    ? Number(value)
+                    : null;
+            }
         );
 
 
+    // Diastolic values
     const diastolicData =
-        history.map(
-            record =>
-                record.blood_pressure
-                    ?.diastolic
-                    ?.value ??
-                record.blood_pressure
-                    ?.diastolic ??
-                null
+        filteredHistory.map(
+            record => {
+
+                const value =
+                    record.blood_pressure?.diastolic?.value ??
+                    record.blood_pressure?.diastolic;
+
+                return value !== undefined &&
+                       value !== null
+                    ? Number(value)
+                    : null;
+            }
         );
 
 
-    // Destroy previous chart if one exists
-
-    if (bloodPressureChart) {
-
-        bloodPressureChart.destroy();
-
-    }
+    // Destroy previous chart
+    destroyBloodPressureChart();
 
 
+    // Create new chart
     bloodPressureChart =
         new Chart(canvas, {
 
@@ -485,7 +817,9 @@ function createBloodPressureChart(history) {
 
                         fill: false,
 
-                        pointRadius: 4
+                        pointRadius: 3,
+
+                        pointHoverRadius: 5
                     },
 
                     {
@@ -499,13 +833,13 @@ function createBloodPressureChart(history) {
 
                         fill: false,
 
-                        pointRadius: 4
+                        pointRadius: 3,
+
+                        pointHoverRadius: 5
                     }
 
                 ]
-
             },
-
 
             options: {
 
@@ -513,6 +847,13 @@ function createBloodPressureChart(history) {
 
                 maintainAspectRatio: false,
 
+                interaction: {
+
+                    mode: "index",
+
+                    intersect: false
+
+                },
 
                 plugins: {
 
@@ -520,16 +861,37 @@ function createBloodPressureChart(history) {
 
                         display: true
 
+                    },
+
+                    tooltip: {
+
+                        enabled: true
+
                     }
 
                 },
 
-
                 scales: {
+
+                    x: {
+
+                        ticks: {
+
+                            maxRotation: 0,
+
+                            autoSkip: true
+
+                        }
+
+                    },
 
                     y: {
 
-                        beginAtZero: false
+                        beginAtZero: false,
+
+                        suggestedMin: 50,
+
+                        suggestedMax: 180
 
                     }
 
@@ -542,7 +904,76 @@ function createBloodPressureChart(history) {
 
 
 // ==========================================
-// HELPER
+// DESTROY BLOOD PRESSURE CHART
+// ==========================================
+
+function destroyBloodPressureChart() {
+
+    if (bloodPressureChart) {
+
+        bloodPressureChart.destroy();
+
+        bloodPressureChart = null;
+    }
+}
+
+
+// ==========================================
+// PERIOD SELECTOR
+// ==========================================
+
+function setupPeriodSelector() {
+
+    const select =
+        document.getElementById(
+            "period-select"
+        );
+
+    if (!select) {
+        return;
+    }
+
+
+    // Add the available options
+    select.innerHTML = `
+
+        <option value="Last 6 months">
+            Last 6 months
+        </option>
+
+        <option value="Last 12 months">
+            Last 12 months
+        </option>
+
+        <option value="All history">
+            All history
+        </option>
+
+    `;
+
+
+    // Update chart when selection changes
+    select.addEventListener(
+        "change",
+        () => {
+
+            if (
+                selectedPatient &&
+                selectedPatient.diagnosis_history
+            ) {
+
+                createBloodPressureChart(
+                    selectedPatient.diagnosis_history
+                );
+            }
+
+        }
+    );
+}
+
+
+// ==========================================
+// SET TEXT
 // ==========================================
 
 function setText(id, value) {
@@ -550,11 +981,9 @@ function setText(id, value) {
     const element =
         document.getElementById(id);
 
-
     if (!element) {
         return;
     }
-
 
     element.textContent =
         value !== undefined &&
@@ -566,6 +995,70 @@ function setText(id, value) {
 
 
 // ==========================================
+// ESCAPE HTML
+// ==========================================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// ==========================================
+// ERROR MESSAGE
+// ==========================================
+
+function showError(message) {
+
+    console.error(message);
+
+    const existing =
+        document.getElementById(
+            "dashboard-error"
+        );
+
+    if (existing) {
+
+        existing.textContent =
+            message;
+
+        return;
+    }
+
+    const error =
+        document.createElement("div");
+
+    error.id =
+        "dashboard-error";
+
+    error.textContent =
+        message;
+
+    error.style.padding =
+        "15px";
+
+    error.style.margin =
+        "15px";
+
+    error.style.background =
+        "#ffe5e5";
+
+    error.style.color =
+        "#b00020";
+
+    error.style.borderRadius =
+        "8px";
+
+    document.body.prepend(error);
+}
+
+
+// ==========================================
 // START APPLICATION
 // ==========================================
 
@@ -573,6 +1066,10 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        // Setup chart period selector
+        setupPeriodSelector();
+
+        // Fetch patients
         fetchPatients();
 
     }
